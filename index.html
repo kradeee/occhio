@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Occhio – scadenze</title>
+<meta name="theme-color" content="#ffd23f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: asciutto e pratico, come un post-it sul frigo che ti salva da una multa.
+   IDEA: il cartello giallo "attenzione" + l'agenda a strappo: ogni scadenza è un foglietto con i giorni che mancano.
+   PICTURE: la lista stessa, con il conto alla rovescia grande appeso a sinistra.
+   COLOUR and TYPE: giallo segnaletica dominante, inchiostro quasi nero, rosso per lo scaduto; Archivo per tutto.
+   LAYOUT: fascia gialla con riepilogo, barra strumenti, lista a gruppi, poi abbonamenti e backup. */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#121212);--ink:light-dark(#141414,#f2f2f0);--mut:light-dark(#5c5c58,#a8a8a2);--line:light-dark(#e6e6e1,#2c2c2a);--card:light-dark(#fafaf7,#1b1b1a);--sun:light-dark(#ffd23f,#e6b820);--red:light-dark(#d7002a,#ff5a6e);--blue:light-dark(#1d3557,#9cc3ff);--ok:light-dark(#1f7a3d,#6fd08f)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Archivo,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(24px,4vw,56px) max(5vw,16px)}
+.wrap{max-width:1040px;margin:0 auto}
+header.band{background:var(--sun);color:#141414;padding-bottom:28px}
+h1{font-size:clamp(36px,6vw,52px);line-height:1.05;margin:0;font-weight:800;letter-spacing:-.02em;display:flex;align-items:center;gap:12px}
+h1 svg{width:1.1em;height:1.1em;flex:none}
+.tag{margin:6px 0 22px;font-size:17px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stat{background:#fff;border:2px solid #141414;border-radius:14px;padding:12px 14px;box-shadow:4px 4px 0 #141414}
+.stat b{display:block;font-size:clamp(22px,4vw,32px);line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat span{font-size:14px;color:#3d3d3a}
+.stat.alert b{color:#d7002a}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px}
+button,.btn{font:inherit;font-size:16px;min-height:44px;padding:8px 16px;border-radius:12px;border:2px solid var(--ink);background:var(--bg);color:var(--ink);cursor:pointer;font-weight:600}
+button.pri{background:#141414;color:#ffd23f;border-color:#141414}
+:root[data-theme=dark] button.pri,:root:not([data-theme=light]) button.pri{background:light-dark(#141414,#ffd23f);color:light-dark(#ffd23f,#141414);border-color:light-dark(#141414,#ffd23f)}
+button.ghost{border-color:var(--line);font-weight:500}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+input,select,textarea{font:inherit;font-size:16px;min-height:44px;padding:8px 12px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+#q{flex:1 1 200px;width:auto}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.chip{min-height:40px;padding:6px 14px;border-radius:999px;border:2px solid var(--line);font-weight:500}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+h2{font-size:22px;margin:28px 0 10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+h2 small{font-size:14px;color:var(--mut);font-weight:500}
+.grp{font-size:15px;font-weight:600;color:var(--mut);margin:22px 0 8px;border-bottom:2px solid var(--line);padding-bottom:4px}
+.grp.late{color:var(--red);border-color:var(--red)}
+.item{display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.cd{text-align:center;border-radius:12px;padding:8px 4px;background:var(--card);border:2px solid var(--line)}
+.cd b{display:block;font-size:30px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums}
+.cd span{font-size:13px;color:var(--mut)}
+.cd.soon{background:var(--sun);border-color:#141414;color:#141414}.cd.soon span{color:#3d3d3a}
+.cd.late{background:var(--red);border-color:var(--red);color:#fff}.cd.late span{color:#fff}
+.nm{font-weight:600;font-size:17px;overflow-wrap:anywhere}
+.meta{font-size:14px;color:var(--mut);display:flex;flex-wrap:wrap;gap:4px 12px}
+.meta .c{white-space:nowrap}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.acts button{min-height:44px;padding:6px 12px;font-size:15px}
+.acts .done{border-color:var(--ok);color:var(--ok)}
+.empty{padding:28px;text-align:center;border:2px dashed var(--line);border-radius:14px;color:var(--mut)}
+.note{font-size:14px;color:var(--mut)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,260px);gap:20px;align-items:start}
+.sim label{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.sim label input{width:22px;min-height:22px;flex:none;accent-color:var(--red)}
+.sim label .p{margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sim label.cut .n{text-decoration:line-through;color:var(--mut)}
+.save{background:var(--sun);color:#141414;border:2px solid #141414;border-radius:14px;padding:18px;box-shadow:4px 4px 0 #141414}
+.save b{display:block;font-size:clamp(30px,5vw,42px);line-height:1.05;white-space:nowrap}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+dialog{border:2px solid var(--ink);border-radius:16px;padding:0;width:min(560px,94vw);background:var(--bg);color:var(--ink)}
+dialog::backdrop{background:rgb(0 0 0/.45)}
+dialog form{padding:20px;display:grid;gap:12px}
+dialog h3{margin:0;font-size:22px}
+.f2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+label.fl{display:grid;gap:4px;font-size:14px;font-weight:600}
+.presets{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.presets button{flex:none;min-height:38px;font-size:14px;padding:4px 12px;border-width:1px;font-weight:500}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(140%);background:#141414;color:#fff;padding:10px 12px 10px 18px;border-radius:12px;display:flex;gap:12px;align-items:center;transition:transform .25s,visibility .25s;z-index:9;max-width:92vw;visibility:hidden}
+#toast.on{transform:translateX(-50%);visibility:visible}
+#toast button{min-height:38px;background:#ffd23f;color:#141414;border-color:#ffd23f;padding:4px 12px}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}}
+footer{font-size:14px;color:var(--mut)}
+@media(max-width:600px){.stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.stats .stat:last-child{grid-column:1/-1}.item{grid-template-columns:68px minmax(0,1fr)}.cd b{font-size:24px}.acts{grid-column:1/-1;justify-content:flex-start}.sim{grid-template-columns:minmax(0,1fr)}.f2{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <h1><svg viewBox="0 0 512 512" aria-hidden="true"><path d="M60 256c50-82 115-124 196-124s146 42 196 124c-50 82-115 124-196 124S110 338 60 256z" fill="#fff" stroke="#141414" stroke-width="30" stroke-linejoin="round"/><circle cx="256" cy="256" r="66" fill="#141414"/><circle cx="280" cy="232" r="19" fill="#fff"/></svg>Occhio</h1>
+  <p class="tag">Bollo, revisione, documenti, abbonamenti: le scadenze, prima che scadano.</p>
+  <div class="stats" id="stats"></div>
+</div></header>
+
+<main class="band"><div class="wrap">
+  <div class="tools">
+    <button class="pri" id="add">+ Nuova scadenza</button>
+    <input id="q" type="search" placeholder="Cerca…" aria-label="Cerca scadenze">
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="Filtra per categoria"></div>
+  <p class="note" id="sampleNote" hidden>Ci sono alcune scadenze di esempio. <button class="ghost" id="clearSample">Cancella gli esempi</button></p>
+  <p class="note" id="storeNote" hidden>Attenzione: questo browser non permette di salvare i dati. Le modifiche spariscono quando chiudi la pagina. Usa "Copia backup" per non perderle.</p>
+  <div id="list"></div>
+
+  <h2>Simulatore abbonamenti <small>spunta quelli che vuoi disdire</small></h2>
+  <div class="sim">
+    <div id="subs"></div>
+    <div class="save"><span>Risparmieresti</span><b id="saveY">0 €</b><span id="saveM">all'anno · 0 € al mese</span></div>
+  </div>
+
+  <h2>Promemoria e backup</h2>
+  <p class="note">I dati restano solo in questo browser: niente account, niente cloud. Per ricevere davvero le notifiche, esporta le scadenze nel calendario del telefono. Ogni evento ha il suo avviso con i giorni di preavviso che hai scelto.</p>
+  <div class="row">
+    <button id="ics">Esporta nel calendario (.ics)</button>
+    <button class="ghost" id="copy">Copia backup</button>
+    <button class="ghost" id="imp">Importa backup</button>
+  </div>
+  <footer><p>Occhio · i dati sono salvati solo su questo dispositivo.</p></footer>
+</div></main>
+
+<dialog id="dlg"><form id="frm" method="dialog">
+  <h3 id="dlgT">Nuova scadenza</h3>
+  <div class="presets" id="presets" aria-label="Modelli rapidi"></div>
+  <label class="fl">Nome<input id="fName" required maxlength="80" placeholder="Es. Bollo Panda"></label>
+  <div class="f2">
+    <label class="fl">Categoria<select id="fCat"></select></label>
+    <label class="fl">Data di scadenza<input id="fDate" type="date" required></label>
+  </div>
+  <div class="f2">
+    <label class="fl">Si ripete<select id="fRep"></select></label>
+    <label class="fl">Costo (€)<input id="fCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0"></label>
+  </div>
+  <label class="fl">Avvisami giorni prima<input id="fRem" type="number" min="0" max="365" value="7" inputmode="numeric"></label>
+  <label class="fl">Note<textarea id="fNote" rows="2" maxlength="300"></textarea></label>
+  <div class="row" style="justify-content:flex-end"><button type="button" class="ghost" id="cancel">Annulla</button><button class="pri" id="saveBtn" value="ok">Salva</button></div>
+</form></dialog>
+
+<dialog id="dlgI"><form id="frmI" method="dialog">
+  <h3>Importa backup</h3>
+  <p class="note">Incolla il testo copiato con "Copia backup", oppure scegli il file. Le scadenze importate sostituiscono quelle attuali.</p>
+  <textarea id="impTxt" rows="6" aria-label="Testo del backup"></textarea>
+  <input type="file" id="impFile" accept=".json,application/json,text/plain" aria-label="File di backup">
+  <p class="note" id="impErr" style="color:var(--red)" hidden>Il testo non sembra un backup di Occhio.</p>
+  <div class="row" style="justify-content:flex-end"><button type="button" class="ghost" id="impCancel">Annulla</button><button type="button" class="pri" id="impOk">Importa</button></div>
+</form></dialog>
+
+<div id="toast" role="status" aria-live="polite"><span id="toastT"></span><button id="toastU" hidden>Annulla</button></div>
+
+<script>
+{
+const CATS={auto:'Auto',doc:'Documenti',sub:'Abbonamenti',casa:'Casa',altro:'Altro'};
+const REPS={0:'Una volta',1:'Ogni mese',2:'Ogni 2 mesi',3:'Ogni 3 mesi',6:'Ogni 6 mesi',12:'Ogni anno',24:'Ogni 2 anni',60:'Ogni 5 anni',120:'Ogni 10 anni'};
+const PRESETS=[['Bollo auto','auto',12,0],['Revisione auto','auto',24,79],['Assicurazione auto','auto',12,0],['Tagliando','auto',12,0],['Carta d\'identità','doc',120,22],['Passaporto','doc',120,116],['Patente','doc',120,0],['Tessera sanitaria','doc',72,0],['Netflix','sub',1,13.99],['Spotify','sub',1,11.99],['Palestra','sub',1,40],['Telefono','sub',1,9.99],['Controllo caldaia','casa',12,90],['TARI','casa',6,0],['Bolletta luce','casa',2,0]];
+REPS[72]='Ogni 6 anni';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:n%1?2:0}).format(n||0);
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const days=s=>Math.round((parse(s)-today())/864e5);
+const addM=(s,m)=>{const d=parse(s),day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+m);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return iso(d)};
+const fmt=s=>parse(s).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+
+let store=null;try{localStorage.setItem('_t','1');localStorage.removeItem('_t');store=localStorage}catch(e){}
+const KEY='occhio.v1';
+function sample(){const t=iso(today()),a=n=>{const d=today();d.setDate(d.getDate()+n);return iso(d)};
+ return[{n:'Bollo Panda',c:'auto',d:a(-3),r:12,p:186,rem:15},{n:'Revisione auto',c:'auto',d:a(19),r:24,p:79,rem:30},{n:'Assicurazione RC auto',c:'auto',d:a(64),r:12,p:420,rem:20},{n:'Carta d\'identità',c:'doc',d:a(140),r:120,p:22,rem:60},{n:'Netflix',c:'sub',d:a(4),r:1,p:13.99,rem:2},{n:'Palestra',c:'sub',d:a(11),r:1,p:45,rem:3},{n:'Spotify',c:'sub',d:a(22),r:1,p:11.99,rem:2},{n:'Abbonamento AI',c:'sub',d:a(8),r:1,p:22,rem:2},{n:'Controllo caldaia',c:'casa',d:a(37),r:12,p:90,rem:14},{n:'TARI seconda rata',c:'casa',d:a(52),r:6,p:140,rem:10}].map(x=>({...x,id:uid(),note:'',ex:true}))}
+let S;try{S=JSON.parse(store?.getItem(KEY)||'null')}catch(e){S=null}
+if(!S||!Array.isArray(S.items))S={items:sample(),cut:[]};
+const save=()=>{try{store?.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let filter='all',undo=null,editId=null;
+
+function stats(){const it=S.items,late=it.filter(x=>days(x.d)<0).length,soon=it.filter(x=>{const k=days(x.d);return k>=0&&k<=30});
+ const year=it.filter(x=>x.r>0).reduce((s,x)=>s+(+x.p||0)*12/x.r,0);
+ $('stats').innerHTML=`<div class="stat ${late?'alert':''}"><b>${late}</b><span>${late===1?'scadenza superata':'scadenze superate'}</span></div><div class="stat"><b>${soon.length}</b><span>nei prossimi 30 giorni · ${esc(eur(soon.reduce((s,x)=>s+(+x.p||0),0)))}</span></div><div class="stat"><b>${esc(eur(Math.round(year)))}</b><span>spese ricorrenti all'anno</span></div>`}
+
+function chips(){const n=c=>S.items.filter(x=>c==='all'||x.c===c).length;
+ $('chips').innerHTML=[['all','Tutte'],...Object.entries(CATS)].map(([k,v])=>`<button class="chip" data-f="${k}" aria-pressed="${filter===k}">${v} · ${n(k)}</button>`).join('')}
+
+function row(x){const k=days(x.d),cls=k<0?'late':k<=x.rem?'soon':'';
+ const lab=k<0?(k===-1?'giorno fa':'giorni fa'):k===0?'oggi':k===1?'giorno':'giorni';
+ return`<div class="item"><div class="cd ${cls}"><b>${k===0?'!':Math.abs(k)}</b><span>${lab}</span></div>
+ <div><div class="nm">${esc(x.n)}</div><div class="meta"><span>${CATS[x.c]||'Altro'}</span><span class="c">${esc(fmt(x.d))}</span><span>${esc(REPS[x.r]||'')}</span>${+x.p?`<span class="c">${esc(eur(+x.p))}</span>`:''}</div>${x.note?`<div class="note">${esc(x.note)}</div>`:''}</div>
+ <div class="acts"><button class="done" data-a="done" data-id="${esc(x.id)}">${x.r?'Fatto, rinnova':'Fatto'}</button><button class="ghost" data-a="edit" data-id="${esc(x.id)}">Modifica</button><button class="ghost" data-a="del" data-id="${esc(x.id)}" aria-label="Elimina ${esc(x.n)}">Elimina</button></div></div>`}
+
+function list(){const q=$('q').value.trim().toLowerCase();
+ const it=S.items.filter(x=>(filter==='all'||x.c===filter)&&(!q||(x.n+' '+x.note).toLowerCase().includes(q))).sort((a,b)=>a.d.localeCompare(b.d));
+ if(!it.length){$('list').innerHTML=`<div class="empty">${S.items.length?'Nessuna scadenza con questo filtro.':'Niente scadenze. Beato te, oppure non le hai ancora inserite.'}<br><br><button class="pri" data-a="new">+ Aggiungi la prima</button></div>`;return}
+ const G=[['late','Scadute',x=>days(x.d)<0],['w','Entro 7 giorni',x=>days(x.d)<=7],['m','Entro 30 giorni',x=>days(x.d)<=30],['l','Più avanti',()=>true]];
+ const used=new Set();$('list').innerHTML=G.map(([k,t,f])=>{const g=it.filter(x=>!used.has(x.id)&&f(x));g.forEach(x=>used.add(x.id));return g.length?`<div class="grp ${k==='late'?'late':''}">${t} · ${g.length}</div>${g.map(row).join('')}`:''}).join('');
+ $('sampleNote').hidden=!S.items.some(x=>x.ex)}
+
+function subs(){const it=S.items.filter(x=>x.c==='sub'&&x.r>0);
+ $('subs').innerHTML=it.length?it.map(x=>{const y=(+x.p||0)*12/x.r,c=S.cut.includes(x.id);return`<label class="${c?'cut':''}"><input type="checkbox" data-cut="${esc(x.id)}" ${c?'checked':''}><span class="n">${esc(x.n)}</span><span class="p">${esc(eur(Math.round(y*100)/100))}/anno</span></label>`}).join(''):'<p class="note">Aggiungi degli abbonamenti ricorrenti per usare il simulatore.</p>';
+ const tot=it.filter(x=>S.cut.includes(x.id)).reduce((s,x)=>s+(+x.p||0)*12/x.r,0);
+ $('saveY').textContent=eur(Math.round(tot));$('saveM').textContent=`all'anno · ${eur(Math.round(tot/12*100)/100)} al mese`}
+
+function render(){S.cut=S.cut.filter(id=>S.items.some(x=>x.id===id));stats();chips();list();subs();save()}
+
+function toast(t,u){$('toastT').textContent=t;$('toastU').hidden=!u;undo=u||null;$('toast').classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>{$('toast').classList.remove('on');undo=null},5000)}
+const snap=()=>JSON.stringify(S);
+const restore=s=>()=>{S=JSON.parse(s);render();toast('Annullato')};
+
+function openForm(x){editId=x?.id||null;$('dlgT').textContent=x?'Modifica scadenza':'Nuova scadenza';$('presets').hidden=!!x;
+ $('fName').value=x?.n||'';$('fCat').value=x?.c||'auto';$('fDate').value=x?.d||iso(today());$('fRep').value=String(x?.r??12);$('fCost').value=x?.p||'';$('fRem').value=x?.rem??7;$('fNote').value=x?.note||'';
+ $('dlg').showModal();$('fName').focus()}
+
+$('fCat').innerHTML=Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+$('fRep').innerHTML=Object.entries(REPS).sort((a,b)=>a[0]-b[0]).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+$('presets').innerHTML=PRESETS.map((p,i)=>`<button type="button" data-p="${i}">${esc(p[0])}</button>`).join('');
+$('presets').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;const[n,c,r,p]=PRESETS[b.dataset.p];$('fName').value=n;$('fCat').value=c;$('fRep').value=String(r);$('fCost').value=p||'';$('fRem').value=c==='doc'?60:c==='sub'?2:14;$('fDate').focus()});
+
+$('frm').addEventListener('submit',e=>{e.preventDefault();const n=$('fName').value.trim(),d=$('fDate').value;if(!n||!d)return;
+ const v={n,c:$('fCat').value,d,r:+$('fRep').value,p:Math.max(0,parseFloat($('fCost').value)||0),rem:Math.max(0,parseInt($('fRem').value)||0),note:$('fNote').value.trim()};
+ const s=snap();if(editId){const x=S.items.find(x=>x.id===editId);Object.assign(x,v,{ex:false})}else S.items.push({...v,id:uid()});
+ $('dlg').close();render();toast(editId?'Modifiche salvate':'Scadenza aggiunta',restore(s))});
+$('cancel').onclick=()=>$('dlg').close();
+$('add').onclick=()=>openForm();
+$('q').oninput=list;
+$('chips').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(b){filter=b.dataset.f;chips();list()}});
+$('list').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;if(a==='new')return openForm();
+ const x=S.items.find(x=>x.id===b.dataset.id);if(!x)return;const s=snap();
+ if(a==='edit')return openForm(x);
+ if(a==='del'){S.items=S.items.filter(y=>y!==x);render();return toast(`"${x.n}" eliminata`,restore(s))}
+ if(a==='done'){if(x.r){let d=addM(x.d,x.r);while(days(d)<0)d=addM(d,x.r);x.d=d;render();toast(`Rinnovata: prossima il ${fmt(d)}`,restore(s))}else{S.items=S.items.filter(y=>y!==x);render();toast(`"${x.n}" completata`,restore(s))}}});
+$('subs').addEventListener('change',e=>{const id=e.target.dataset.cut;if(!id)return;S.cut=e.target.checked?[...S.cut,id]:S.cut.filter(y=>y!==id);subs();save()});
+$('clearSample').onclick=()=>{const s=snap();S.items=S.items.filter(x=>!x.ex);render();toast('Esempi cancellati',restore(s))};
+$('toastU').onclick=()=>{if(undo){const u=undo;undo=null;u()}};
+
+// Export
+let dl=null;
+async function saveFile(name,data,type){
+ if(dl){try{await dl.save({filename:name,data});return true}catch(e){return false}}
+ try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);return true}catch(e){return false}}
+const icsEsc=s=>String(s).replace(/\\/g,'\\\\').replace(/[,;]/g,m=>'\\'+m).replace(/\n/g,'\\n');
+function ics(){const now=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+ const ev=S.items.map(x=>{const d=x.d.replace(/-/g,''),e=iso(new Date(parse(x.d).getTime()+864e5)).replace(/-/g,'');
+  const rr=x.r?(x.r%12===0?`RRULE:FREQ=YEARLY;INTERVAL=${x.r/12}`:`RRULE:FREQ=MONTHLY;INTERVAL=${x.r}`):'';
+  const desc=[CATS[x.c],+x.p?eur(+x.p):'',x.note].filter(Boolean).join(' · ');
+  return['BEGIN:VEVENT',`UID:${x.id}@occhio`,`DTSTAMP:${now}`,`DTSTART;VALUE=DATE:${d}`,`DTEND;VALUE=DATE:${e}`,`SUMMARY:${icsEsc('Scadenza: '+x.n)}`,desc&&`DESCRIPTION:${icsEsc(desc)}`,rr,'BEGIN:VALARM','ACTION:DISPLAY',`DESCRIPTION:${icsEsc(x.n)}`,`TRIGGER:-P${x.rem||0}D`,'END:VALARM','END:VEVENT'].filter(Boolean).join('\r\n')});
+ return['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Occhio//IT','CALSCALE:GREGORIAN',...ev,'END:VCALENDAR'].join('\r\n')+'\r\n'}
+$('ics').onclick=async()=>{if(!S.items.length)return toast('Non c\'è niente da esportare');toast(await saveFile('occhio-scadenze.ics',ics(),'text/calendar')?'File calendario pronto: aprilo per importarlo':'Download non riuscito in questa vista')};
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify({occhio:1,items:S.items}));toast('Backup copiato: incollalo in una nota o in un\'email a te stesso')}catch(e){const ok=await saveFile('occhio-backup.json',JSON.stringify({occhio:1,items:S.items}),'application/json');toast(ok?'Backup salvato come file':'Copia non riuscita in questa vista')}};
+$('imp').onclick=()=>{$('impTxt').value='';$('impErr').hidden=true;$('dlgI').showModal()};
+$('impCancel').onclick=()=>$('dlgI').close();
+$('impFile').onchange=async e=>{const f=e.target.files[0];if(f)$('impTxt').value=await f.text()};
+$('impOk').onclick=()=>{try{const o=JSON.parse($('impTxt').value);const it=o.items;if(!Array.isArray(it))throw 0;
+ const clean=it.filter(x=>x&&typeof x.n==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.d)).map(x=>({id:String(x.id||uid()),n:x.n.slice(0,80),c:CATS[x.c]?x.c:'altro',d:x.d,r:REPS[x.r]?+x.r:0,p:Math.max(0,+x.p||0),rem:Math.max(0,parseInt(x.rem)||0),note:String(x.note||'').slice(0,300)}));
+ if(!clean.length)throw 0;const s=snap();S={items:clean,cut:[]};$('dlgI').close();render();toast(`Importate ${clean.length} scadenze`,restore(s))}catch(e){$('impErr').hidden=false}};
+
+if(!store)$('storeNote').hidden=false;
+render();
+setInterval(()=>{if(document.visibilityState==='visible')render()},6e4);
+if(window.claude?.use)window.claude.use('downloads').then(d=>{dl=d}).catch(()=>{});
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
