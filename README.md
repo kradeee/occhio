@@ -15,6 +15,7 @@ Occhio è una web app installabile (PWA) per tenere sotto controllo le scadenze 
 - Simulatore abbonamenti: quanto risparmi disdicendo quelli che non usi
 - Esportazione in calendario (`.ics`) con promemoria, per avere le notifiche sul telefono
 - Backup e ripristino dei dati in JSON
+- Guida al primo avvio: come si usa e come aggiungerla alla Home su iPhone e Android
 - Funziona offline e si installa sulla schermata home
 - Tema chiaro e scuro automatico
 

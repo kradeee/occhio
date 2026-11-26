@@ -94,6 +94,19 @@ footer{font-size:14px;color:var(--mut)}
 .welcome{padding:28px 20px;text-align:center;border:2px dashed var(--line);border-radius:16px}
 .welcome h3{font-size:24px;margin:0 0 6px}
 .welcome .row{justify-content:center;margin-top:16px}
+#dlgIntro form{gap:14px}
+.step[hidden]{display:none}
+.step h3{font-size:24px;line-height:1.15}
+.step ol,.step ul{margin:0;padding-left:22px;display:grid;gap:8px}
+.step .big{display:flex;align-items:center;justify-content:center;background:var(--sun);border:2px solid #141414;border-radius:14px;padding:16px;color:#141414}
+.step .big svg{width:72px;height:72px}
+.how{display:grid;gap:10px}
+.how div{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:start}
+.how b.n{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#141414;color:#ffd23f;font-size:15px}
+:root:not([data-theme=light]) .how b.n{background:light-dark(#141414,#ffd23f);color:light-dark(#ffd23f,#141414)}
+.ico{display:inline-block;vertical-align:-4px;width:20px;height:20px}
+.dots{display:flex;gap:6px;justify-content:center}.dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--ink)}
+.linkbtn{background:none;border:0;padding:0;min-height:0;color:var(--blue);text-decoration:underline;font-weight:500;font-size:14px}
 @media(max-width:600px){.stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.stats .stat:last-child{grid-column:1/-1}.item{grid-template-columns:68px minmax(0,1fr)}.cd b{font-size:24px}.acts{grid-column:1/-1;justify-content:flex-start}.sim{grid-template-columns:minmax(0,1fr)}.f2{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
@@ -132,8 +145,37 @@ footer{font-size:14px;color:var(--mut)}
     <button class="ghost" id="copy">Copia backup</button>
     <button class="ghost" id="imp">Importa backup</button>
   </div>
-  <footer><p>Occhio · i dati sono salvati solo su questo dispositivo.</p></footer>
+  <footer><p>Occhio · i dati sono salvati solo su questo dispositivo. <button type="button" class="linkbtn" id="showIntro">Come funziona e come installarla</button></p></footer>
 </div></main>
+
+<dialog id="dlgIntro" aria-labelledby="introT"><form id="frmIntro" method="dialog">
+  <section class="step" data-s="0">
+    <div class="big"><svg viewBox="0 0 512 512" aria-hidden="true"><path d="M60 256c50-82 115-124 196-124s146 42 196 124c-50 82-115 124-196 124S110 338 60 256z" fill="#fff" stroke="#141414" stroke-width="30" stroke-linejoin="round"/><circle cx="256" cy="256" r="66" fill="#141414"/><circle cx="280" cy="232" r="19" fill="#fff"/></svg></div>
+    <h3 id="introT">Benvenuto in Occhio</h3>
+    <p>Bollo, revisione, documenti, abbonamenti, bollette: tutte le scadenze in un posto solo, con il conto alla rovescia.</p>
+    <ul><li>Niente account e niente registrazione.</li><li>I dati restano solo su questo telefono.</li><li>Gratis, e funziona anche offline.</li></ul>
+  </section>
+  <section class="step" data-s="1" hidden>
+    <h3>Come funziona</h3>
+    <div class="how">
+      <div><b class="n">1</b><span><b>Aggiungi una scadenza</b> con "+ Nuova scadenza". I modelli rapidi (bollo, passaporto, Netflix…) compilano i campi per te. Per l'auto usa "Aggiungi auto": bastano le date del libretto.</span></div>
+      <div><b class="n">2</b><span><b>Guarda il numero grande</b>: sono i giorni che mancano. Diventa giallo quando si avvicina e rosso quando è scaduta. All'apertura, in alto, trovi quelle di cui occuparti.</span></div>
+      <div><b class="n">3</b><span><b>Premi "Fatto, rinnova"</b> quando hai pagato: la scadenza passa da sola al giro successivo.</span></div>
+      <div><b class="n">4</b><span><b>Vuoi le notifiche?</b> In fondo alla pagina usa "Esporta nel calendario": ogni scadenza finisce nel calendario del telefono con il suo avviso.</span></div>
+    </div>
+  </section>
+  <section class="step" data-s="2" hidden>
+    <h3>Mettila nella schermata Home</h3>
+    <p class="note">Così si apre come un'app, a schermo intero e anche senza connessione.</p>
+    <div id="instIos" hidden><ol><li>Apri questa pagina con <b>Safari</b>.</li><li>Tocca il pulsante <b>Condividi</b> <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="icona Condividi"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg> in basso (su iPad è in alto).</li><li>Scorri e tocca <b>Aggiungi alla schermata Home</b>.</li><li>Tocca <b>Aggiungi</b> in alto a destra.</li></ol></div>
+    <div id="instAndroid" hidden><button type="button" class="pri" id="instNow" hidden>Installa Occhio</button><ol><li>Apri questa pagina con <b>Chrome</b>.</li><li>Tocca il menu <svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-label="menu"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg> in alto a destra.</li><li>Tocca <b>Installa app</b> (oppure <b>Aggiungi a schermata Home</b>).</li><li>Conferma con <b>Installa</b>.</li></ol></div>
+    <div id="instDesk" hidden><p>Occhio è pensata per il telefono. Apri questo indirizzo dal browser del telefono:</p><p><b id="instUrl"></b></p><p class="note">Su iPhone segui i passaggi con Safari (Condividi → Aggiungi alla schermata Home), su Android con Chrome (menu ⋮ → Installa app).</p></div>
+    <div id="instDone" hidden><p><b>È già installata.</b> Perfetto, non devi fare altro.</p></div>
+    <p class="note">Ogni tanto fai "Copia backup": se cancelli i dati del browser o cambi telefono, le scadenze non si recuperano in altro modo.</p>
+  </section>
+  <div class="dots" id="introDots" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="row" style="justify-content:space-between"><button type="button" class="ghost" id="introSkip">Salta</button><span class="row"><button type="button" class="ghost" id="introBack" hidden>Indietro</button><button type="button" class="pri" id="introNext">Avanti</button></span></div>
+</form></dialog>
 
 <dialog id="dlg"><form id="frm" method="dialog">
   <h3 id="dlgT">Nuova scadenza</h3>
@@ -322,6 +364,29 @@ $('aCancel').onclick=()=>$('dlgA').close();
 $('frmA').addEventListener('submit',e=>{e.preventDefault();const p=carPlan();if(!p.length)return;const s=snap();
  p.forEach(x=>S.items.push({...x,id:uid()}));$('dlgA').close();render();toast(`Aggiunte ${p.length} scadenze per l'auto`,restore(s))});
 $('addCar').onclick=openCar;
+
+// Guida al primo avvio
+const INTRO='occhio.intro',ua=navigator.userAgent;
+const isIOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),isAndroid=/Android/.test(ua);
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+let deferred=null,step=0;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;$('instNow').hidden=false});
+addEventListener('appinstalled',()=>{deferred=null;$('instNow').hidden=true;toast('Occhio è installata nella schermata Home')});
+$('instNow').onclick=async()=>{if(!deferred)return;deferred.prompt();try{await deferred.userChoice}catch(e){}deferred=null;$('instNow').hidden=true};
+function showStep(n){step=n;document.querySelectorAll('#dlgIntro .step').forEach(x=>x.hidden=+x.dataset.s!==n);
+ document.querySelectorAll('#introDots i').forEach((d,i)=>d.classList.toggle('on',i===n));
+ $('introBack').hidden=n===0;$('introNext').textContent=n===2?'Inizia':'Avanti'}
+function openIntro(){const inst=isStandalone();$('instDone').hidden=!inst;$('instIos').hidden=inst||!isIOS;$('instAndroid').hidden=inst||!isAndroid;$('instDesk').hidden=inst||isIOS||isAndroid;
+ $('instUrl').textContent=location.href.split('#')[0];showStep(0);$('dlgIntro').showModal()}
+function closeIntro(){try{store?.setItem(INTRO,'1')}catch(e){}$('dlgIntro').close()}
+$('introNext').onclick=()=>step<2?showStep(step+1):closeIntro();
+$('introBack').onclick=()=>showStep(step-1);
+$('introSkip').onclick=closeIntro;
+$('dlgIntro').addEventListener('cancel',()=>{try{store?.setItem(INTRO,'1')}catch(e){}});
+$('frmIntro').addEventListener('submit',e=>e.preventDefault());
+$('showIntro').onclick=openIntro;
+let introSeen=false;try{introSeen=store?.getItem(INTRO)==='1'}catch(e){}
+if(!introSeen)openIntro();
 
 try{store?.removeItem('occhio.key')}catch(e){}
 if(!store)$('storeNote').hidden=false;
