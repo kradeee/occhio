@@ -83,6 +83,22 @@ label.fl{display:grid;gap:4px;font-size:14px;font-weight:600}
 #toast button{min-height:38px;background:#ffd23f;color:#141414;border-color:#ffd23f;padding:4px 12px}
 @media(prefers-reduced-motion:reduce){#toast{transition:none}}
 footer{font-size:14px;color:var(--mut)}
+.today{border:2px solid #141414;background:var(--sun);color:#141414;border-radius:16px;padding:14px 18px;margin-bottom:20px;box-shadow:4px 4px 0 #141414}
+.todayH{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.today h2{margin:0;font-size:20px}
+.today .ghost{background:#fff;color:#141414;border-color:#141414}
+.today ul{margin:8px 0 0;padding-left:20px}.today li{padding:2px 0}.today li b{white-space:nowrap}
+.calc{display:grid;gap:6px}
+.calc div{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:15px}
+.calc div b{white-space:nowrap}
+.welcome{padding:28px 20px;text-align:center;border:2px dashed var(--line);border-radius:16px}
+.welcome h3{font-size:24px;margin:0 0 6px}
+.welcome .row{justify-content:center;margin-top:16px}
+.found{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;margin-bottom:10px;background:var(--card)}
+.found>label:first-child{display:flex;gap:10px;align-items:center;font-weight:600}
+.found>label:first-child input{width:22px;min-height:22px;flex:none}
+.sum{background:var(--card);border-left:4px solid var(--sun);padding:10px 14px;border-radius:8px;margin-bottom:12px;white-space:pre-line}
+a{color:var(--blue)}
 @media(max-width:600px){.stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.stats .stat:last-child{grid-column:1/-1}.item{grid-template-columns:68px minmax(0,1fr)}.cd b{font-size:24px}.acts{grid-column:1/-1;justify-content:flex-start}.sim{grid-template-columns:minmax(0,1fr)}.f2{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
@@ -96,8 +112,14 @@ footer{font-size:14px;color:var(--mut)}
 <main class="band"><div class="wrap">
   <div class="tools">
     <button class="pri" id="add">+ Nuova scadenza</button>
+    <button id="addCar">Aggiungi auto</button>
+    <button id="addLetter">Leggi una lettera</button>
     <input id="q" type="search" placeholder="Cerca…" aria-label="Cerca scadenze">
   </div>
+  <section class="today" id="today" hidden aria-labelledby="todayT">
+    <div class="todayH"><h2 id="todayT">Occhio, oggi ti tocca</h2><button class="ghost" id="seen">Ok, visto</button></div>
+    <ul id="todayL"></ul>
+  </section>
   <div class="chips" id="chips" role="group" aria-label="Filtra per categoria"></div>
   <p class="note" id="sampleNote" hidden>Ci sono alcune scadenze di esempio. <button class="ghost" id="clearSample">Cancella gli esempi</button></p>
   <p class="note" id="storeNote" hidden>Attenzione: questo browser non permette di salvare i dati. Le modifiche spariscono quando chiudi la pagina. Usa "Copia backup" per non perderle.</p>
@@ -145,6 +167,44 @@ footer{font-size:14px;color:var(--mut)}
   <div class="row" style="justify-content:flex-end"><button type="button" class="ghost" id="impCancel">Annulla</button><button type="button" class="pri" id="impOk">Importa</button></div>
 </form></dialog>
 
+<dialog id="dlgA"><form id="frmA" method="dialog">
+  <h3>Aggiungi un'auto</h3>
+  <p class="note">Prendi il libretto: dalle date calcolo revisione, bollo e assicurazione con le regole generali italiane.</p>
+  <label class="fl">Nome o targa<input id="aName" maxlength="40" placeholder="Es. Panda o AB123CD" required></label>
+  <div class="f2">
+    <label class="fl">Data di immatricolazione<input id="aImm" type="date" required></label>
+    <label class="fl">Ultima revisione (se fatta)<input id="aRev" type="date"></label>
+  </div>
+  <div class="f2">
+    <label class="fl">Mese di scadenza del bollo<select id="aBolloM"></select></label>
+    <label class="fl">Importo bollo (€)<input id="aBolloP" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0"></label>
+  </div>
+  <div class="f2">
+    <label class="fl">Scadenza assicurazione<input id="aIns" type="date"></label>
+    <label class="fl">Premio assicurazione (€)<input id="aInsP" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0"></label>
+  </div>
+  <div class="calc" id="aOut" aria-live="polite"></div>
+  <p class="note">Regole usate: prima revisione entro la fine del mese di immatricolazione, 4 anni dopo, poi ogni 2 anni. Bollo entro l'ultimo giorno del mese successivo alla scadenza. Alcune regioni hanno regole diverse: in caso di dubbio controlla sul sito ACI o della tua regione.</p>
+  <div class="row" style="justify-content:flex-end"><button type="button" class="ghost" id="aCancel">Annulla</button><button class="pri" id="aOk">Aggiungi scadenze</button></div>
+</form></dialog>
+
+<dialog id="dlgL"><form id="frmL" method="dialog">
+  <h3>Leggi una lettera</h3>
+  <p class="note">Fotografa o carica una lettera di Comune, Agenzia delle Entrate, INPS, ASL, banca o gestore. L'AI la spiega in parole semplici e trova le scadenze da aggiungere.</p>
+  <div id="keyBox" hidden>
+    <label class="fl">Chiave API di Anthropic<input id="lKey" type="password" autocomplete="off" placeholder="sk-ant-…"></label>
+    <p class="note">Serve una chiave tua, la crei su <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Ogni lettera costa pochi centesimi, che paghi direttamente ad Anthropic. Ti conviene impostare un limite di spesa nella Console. La chiave resta solo su questo dispositivo: chi usa il tuo telefono può usarla.</p>
+  </div>
+  <label class="fl">Foto o PDF (fino a 5 pagine)<input id="lFile" type="file" accept="image/*,application/pdf" multiple></label>
+  <p class="note"><b>Privacy:</b> per leggerla, la lettera viene inviata ad Anthropic. Se contiene dati molto delicati (es. referti medici), valuta tu se mandarla.</p>
+  <p class="note" id="lStatus" aria-live="polite"></p>
+  <div id="lRes"></div>
+  <div class="row" style="justify-content:space-between">
+    <button type="button" class="ghost" id="lForget" hidden>Rimuovi chiave</button>
+    <span class="row" style="margin-left:auto"><button type="button" class="ghost" id="lCancel">Chiudi</button><button type="button" class="pri" id="lGo">Analizza</button><button type="button" class="pri" id="lAdd" hidden>Aggiungi selezionate</button></span>
+  </div>
+</form></dialog>
+
 <div id="toast" role="status" aria-live="polite"><span id="toastT"></span><button id="toastU" hidden>Annulla</button></div>
 
 <script>
@@ -167,10 +227,8 @@ const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
 
 let store=null;try{localStorage.setItem('_t','1');localStorage.removeItem('_t');store=localStorage}catch(e){}
 const KEY='occhio.v1';
-function sample(){const t=iso(today()),a=n=>{const d=today();d.setDate(d.getDate()+n);return iso(d)};
- return[{n:'Bollo Panda',c:'auto',d:a(-3),r:12,p:186,rem:15},{n:'Revisione auto',c:'auto',d:a(19),r:24,p:79,rem:30},{n:'Assicurazione RC auto',c:'auto',d:a(64),r:12,p:420,rem:20},{n:'Carta d\'identità',c:'doc',d:a(140),r:120,p:22,rem:60},{n:'Netflix',c:'sub',d:a(4),r:1,p:13.99,rem:2},{n:'Palestra',c:'sub',d:a(11),r:1,p:45,rem:3},{n:'Spotify',c:'sub',d:a(22),r:1,p:11.99,rem:2},{n:'Abbonamento AI',c:'sub',d:a(8),r:1,p:22,rem:2},{n:'Controllo caldaia',c:'casa',d:a(37),r:12,p:90,rem:14},{n:'TARI seconda rata',c:'casa',d:a(52),r:6,p:140,rem:10}].map(x=>({...x,id:uid(),note:'',ex:true}))}
 let S;try{S=JSON.parse(store?.getItem(KEY)||'null')}catch(e){S=null}
-if(!S||!Array.isArray(S.items))S={items:sample(),cut:[]};
+if(!S||!Array.isArray(S.items))S={items:[],cut:[]};
 const save=()=>{try{store?.setItem(KEY,JSON.stringify(S))}catch(e){}};
 let filter='all',undo=null,editId=null;
 
@@ -189,7 +247,7 @@ function row(x){const k=days(x.d),cls=k<0?'late':k<=x.rem?'soon':'';
 
 function list(){const q=$('q').value.trim().toLowerCase();
  const it=S.items.filter(x=>(filter==='all'||x.c===filter)&&(!q||(x.n+' '+x.note).toLowerCase().includes(q))).sort((a,b)=>a.d.localeCompare(b.d));
- if(!it.length){$('list').innerHTML=`<div class="empty">${S.items.length?'Nessuna scadenza con questo filtro.':'Niente scadenze. Beato te, oppure non le hai ancora inserite.'}<br><br><button class="pri" data-a="new">+ Aggiungi la prima</button></div>`;return}
+ if(!it.length){$('sampleNote').hidden=true;$('list').innerHTML=S.items.length?'<div class="empty">Nessuna scadenza con questo filtro.</div>':`<div class="welcome"><h3>Benvenuto in Occhio</h3><p>Aggiungi la prima scadenza: bastano un nome e una data. Oppure parti dall'auto o da una lettera.</p><div class="row"><button class="pri" data-a="new">+ Nuova scadenza</button><button data-a="car">Aggiungi auto</button><button data-a="letter">Leggi una lettera</button></div></div>`;return}
  const G=[['late','Scadute',x=>days(x.d)<0],['w','Entro 7 giorni',x=>days(x.d)<=7],['m','Entro 30 giorni',x=>days(x.d)<=30],['l','Più avanti',()=>true]];
  const used=new Set();$('list').innerHTML=G.map(([k,t,f])=>{const g=it.filter(x=>!used.has(x.id)&&f(x));g.forEach(x=>used.add(x.id));return g.length?`<div class="grp ${k==='late'?'late':''}">${t} · ${g.length}</div>${g.map(row).join('')}`:''}).join('');
  $('sampleNote').hidden=!S.items.some(x=>x.ex)}
@@ -199,7 +257,12 @@ function subs(){const it=S.items.filter(x=>x.c==='sub'&&x.r>0);
  const tot=it.filter(x=>S.cut.includes(x.id)).reduce((s,x)=>s+(+x.p||0)*12/x.r,0);
  $('saveY').textContent=eur(Math.round(tot));$('saveM').textContent=`all'anno · ${eur(Math.round(tot/12*100)/100)} al mese`}
 
-function render(){S.cut=S.cut.filter(id=>S.items.some(x=>x.id===id));stats();chips();list();subs();save()}
+const SEEN='occhio.seen';
+function todayBox(){let seen='';try{seen=store?.getItem(SEEN)||''}catch(e){}
+ const due=S.items.filter(x=>days(x.d)<=x.rem).sort((a,b)=>a.d.localeCompare(b.d));
+ $('today').hidden=!due.length||seen===iso(today());if($('today').hidden)return;
+ $('todayL').innerHTML=due.map(x=>{const k=days(x.d);return`<li>${esc(x.n)}: <b>${k<0?`scaduta da ${-k} ${k===-1?'giorno':'giorni'}`:k===0?'scade oggi':k===1?'scade domani':`scade tra ${k} giorni`}</b>${+x.p?` · ${esc(eur(+x.p))}`:''}</li>`}).join('')}
+function render(){S.cut=S.cut.filter(id=>S.items.some(x=>x.id===id));stats();todayBox();chips();list();subs();save()}
 
 function toast(t,u){$('toastT').textContent=t;$('toastU').hidden=!u;undo=u||null;$('toast').classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>{$('toast').classList.remove('on');undo=null},5000)}
 const snap=()=>JSON.stringify(S);
@@ -223,6 +286,7 @@ $('add').onclick=()=>openForm();
 $('q').oninput=list;
 $('chips').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(b){filter=b.dataset.f;chips();list()}});
 $('list').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;if(a==='new')return openForm();
+ if(a==='car')return openCar();if(a==='letter')return openLetter();
  const x=S.items.find(x=>x.id===b.dataset.id);if(!x)return;const s=snap();
  if(a==='edit')return openForm(x);
  if(a==='del'){S.items=S.items.filter(y=>y!==x);render();return toast(`"${x.n}" eliminata`,restore(s))}
@@ -251,6 +315,97 @@ $('impFile').onchange=async e=>{const f=e.target.files[0];if(f)$('impTxt').value
 $('impOk').onclick=()=>{try{const o=JSON.parse($('impTxt').value);const it=o.items;if(!Array.isArray(it))throw 0;
  const clean=it.filter(x=>x&&typeof x.n==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.d)).map(x=>({id:String(x.id||uid()),n:x.n.slice(0,80),c:CATS[x.c]?x.c:'altro',d:x.d,r:REPS[x.r]?+x.r:0,p:Math.max(0,+x.p||0),rem:Math.max(0,parseInt(x.rem)||0),note:String(x.note||'').slice(0,300)}));
  if(!clean.length)throw 0;const s=snap();S={items:clean,cut:[]};$('dlgI').close();render();toast(`Importate ${clean.length} scadenze`,restore(s))}catch(e){$('impErr').hidden=false}};
+
+// "Oggi ti tocca"
+$('seen').onclick=()=>{try{store?.setItem(SEEN,iso(today()))}catch(e){}$('today').hidden=true};
+
+// Auto
+const MESI=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+$('aBolloM').innerHTML='<option value="">Come l\'immatricolazione</option>'+MESI.map((m,i)=>`<option value="${i}">${m[0].toUpperCase()+m.slice(1)}</option>`).join('');
+const eom=(y,m)=>iso(new Date(y,m+1,0));
+function carPlan(){const name=$('aName').value.trim()||'auto',imm=$('aImm').value;if(!imm)return[];
+ const out=[],I=parse(imm),t=today();
+ // Revisione
+ let rev,est=false;
+ if($('aRev').value){const R=parse($('aRev').value);rev=eom(R.getFullYear()+2,R.getMonth())}
+ else{rev=eom(I.getFullYear()+4,I.getMonth());while(parse(rev)<t){rev=addM(rev,24);rev=eom(parse(rev).getFullYear(),parse(rev).getMonth());est=true}}
+ out.push({n:`Revisione ${name}`,c:'auto',d:rev,r:24,p:0,rem:30,note:est?'Data stimata: presuppone revisioni regolari ogni 2 anni. Controlla la data sul libretto.':''});
+ // Bollo
+ const bm=$('aBolloM').value===''?I.getMonth():+$('aBolloM').value;
+ let y=t.getFullYear()-1,bol;do{bol=eom(y+(bm===11?1:0),(bm+1)%12);y++}while(parse(bol)<t);
+ out.push({n:`Bollo ${name}`,c:'auto',d:bol,r:12,p:Math.max(0,parseFloat($('aBolloP').value)||0),rem:15,note:'Si paga entro l\'ultimo giorno del mese successivo alla scadenza (regola generale).'});
+ // Assicurazione
+ if($('aIns').value){let ins=$('aIns').value;while(parse(ins)<t)ins=addM(ins,12);
+  out.push({n:`Assicurazione ${name}`,c:'auto',d:ins,r:12,p:Math.max(0,parseFloat($('aInsP').value)||0),rem:20,note:'Dopo la scadenza ci sono 15 giorni di tolleranza, ma è meglio non usarli.'})}
+ return out}
+function carPreview(){const p=carPlan();$('aOut').innerHTML=p.map(x=>`<div><span>${esc(x.n)}</span><b>${esc(fmt(x.d))}</b></div>`).join('')}
+function openCar(){$('frmA').reset();$('aOut').innerHTML='';$('dlgA').showModal();$('aName').focus()}
+$('frmA').addEventListener('input',carPreview);
+$('aCancel').onclick=()=>$('dlgA').close();
+$('frmA').addEventListener('submit',e=>{e.preventDefault();const p=carPlan();if(!p.length)return;const s=snap();
+ p.forEach(x=>S.items.push({...x,id:uid()}));$('dlgA').close();render();toast(`Aggiunte ${p.length} scadenze per l'auto`,restore(s))});
+$('addCar').onclick=openCar;
+
+// Lettere con Claude
+const KKEY='occhio.key',SDK='https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.8.0/+esm';
+const getKey=()=>{try{return store?.getItem(KKEY)||''}catch(e){return''}};
+let found=[];
+function openLetter(){const k=getKey();$('keyBox').hidden=!!k;$('lForget').hidden=!k;$('lKey').value='';$('lFile').value='';$('lStatus').textContent='';$('lRes').innerHTML='';$('lGo').hidden=false;$('lAdd').hidden=true;found=[];$('dlgL').showModal()}
+$('addLetter').onclick=openLetter;
+$('lCancel').onclick=()=>$('dlgL').close();
+$('frmL').addEventListener('submit',e=>{e.preventDefault();if(!$('lGo').hidden)$('lGo').click()});
+$('lForget').onclick=()=>{try{store?.removeItem(KKEY)}catch(e){}$('keyBox').hidden=false;$('lForget').hidden=true;toast('Chiave rimossa da questo dispositivo')};
+const b64=buf=>{let s='';const u=new Uint8Array(buf);for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)};
+async function toBlock(f){
+ if(f.type==='application/pdf'){if(f.size>20e6)throw new Error('Il PDF è troppo grande (massimo 20 MB).');return{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64(await f.arrayBuffer())}}}
+ if(!f.type.startsWith('image/'))throw new Error(`"${f.name}" non è né una foto né un PDF.`);
+ const bmp=await createImageBitmap(f),sc=Math.min(1,1568/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');
+ c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+ return{type:'image',source:{type:'base64',media_type:'image/jpeg',data:c.toDataURL('image/jpeg',.85).split(',')[1]}}}
+const SCHEMA={type:'object',additionalProperties:false,required:['mittente','sintesi','scadenze','avvertenze'],properties:{
+ mittente:{type:'string',description:'Chi ha inviato la lettera'},
+ sintesi:{type:'string',description:'Cosa dice e cosa chiede la lettera, in 2-4 frasi semplici in italiano, dando del tu'},
+ scadenze:{type:'array',items:{type:'object',additionalProperties:false,required:['titolo','data','importo','categoria','cosa_fare'],properties:{
+  titolo:{type:'string',description:'Nome breve della scadenza, max 60 caratteri'},
+  data:{type:'string',description:'Data entro cui agire, formato AAAA-MM-GG; stringa vuota se la lettera non indica una data precisa'},
+  importo:{type:'number',description:'Importo da pagare in euro; 0 se non c\'è nulla da pagare'},
+  categoria:{type:'string',enum:['auto','doc','sub','casa','altro']},
+  cosa_fare:{type:'string',description:'Cosa deve fare concretamente il destinatario, in una frase'}}}},
+ avvertenze:{type:'string',description:'Cose a cui fare attenzione (sanzioni, possibilità di ricorso, rateizzazione); stringa vuota se non ce ne sono'}}};
+$('lGo').onclick=async()=>{
+ let key=getKey();if(!key){key=$('lKey').value.trim();if(!/^sk-ant-/.test(key))return $('lStatus').textContent='Inserisci una chiave API valida (inizia con sk-ant-).'}
+ const files=[...$('lFile').files].slice(0,5);if(!files.length)return $('lStatus').textContent='Scegli almeno una foto o un PDF.';
+ $('lGo').disabled=true;$('lStatus').textContent='Preparo i file…';
+ try{
+  const blocks=[];for(const f of files)blocks.push(await toBlock(f));
+  $('lStatus').textContent='Sto leggendo la lettera, ci vuole qualche secondo…';
+  const {default:Anthropic}=await import(SDK);
+  const client=new Anthropic({apiKey:key,dangerouslyAllowBrowser:true});
+  const res=await client.beta.messages.create({
+   model:'claude-opus-5-5',max_tokens:16000,
+   betas:['server-side-fallback-2026-07-01'],fallbacks:'default',
+   output_config:{effort:'medium',format:{type:'json_schema',schema:SCHEMA}},
+   system:'Aiuti persone comuni a capire lettere burocratiche italiane (Comune, Agenzia delle Entrate, INPS, ASL, banche, gestori, assicurazioni). Spieghi in modo semplice e preciso, senza inventare: se un dato non è scritto nella lettera, non lo indovini. Oggi è il '+iso(today())+'. Se una scadenza è espressa come "entro N giorni dalla notifica" e la data di notifica non è leggibile, lascia la data vuota e spiegalo in cosa_fare.',
+   messages:[{role:'user',content:[...blocks,{type:'text',text:'Leggi questa lettera. Spiegami cosa vuole e individua tutte le scadenze o i pagamenti con la loro data.'}]}]});
+  if(res.stop_reason==='refusal')throw new Error('Il modello non ha voluto analizzare questo documento.');
+  if(res.stop_reason==='max_tokens')throw new Error('La risposta è stata troncata. Prova con meno pagine.');
+  const txt=res.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+  const o=JSON.parse(txt);
+  if(!getKey()){try{store?.setItem(KKEY,key)}catch(e){}$('keyBox').hidden=true;$('lForget').hidden=false}
+  found=(o.scadenze||[]).map(x=>({n:String(x.titolo||'Scadenza').slice(0,80),d:/^\d{4}-\d{2}-\d{2}$/.test(x.data)&&!isNaN(parse(x.data))?x.data:'',p:Math.max(0,+x.importo||0),c:CATS[x.categoria]?x.categoria:'altro',note:String(x.cosa_fare||'').slice(0,300)}));
+  $('lRes').innerHTML=`<div class="sum"><b>${esc(o.mittente||'Lettera')}</b>\n${esc(o.sintesi||'')}${o.avvertenze?`\n\n<b>Attenzione:</b> ${esc(o.avvertenze)}`:''}</div>`+
+   (found.length?found.map((x,i)=>`<div class="found"><label><input type="checkbox" data-i="${i}" ${x.d?'checked':''}>${esc(x.n)}</label><div class="f2"><label class="fl">Data<input type="date" data-d="${i}" value="${esc(x.d)}"></label><label class="fl">Importo (€)<input type="number" min="0" step="0.01" data-p="${i}" value="${x.p||''}"></label></div><span class="note">${esc(x.note)}</span></div>`).join(''):'<p class="note">Non ho trovato scadenze con una data in questa lettera.</p>');
+  $('lStatus').textContent=found.length?'Controlla le date e aggiungi quelle giuste. L\'AI può sbagliare: verifica sempre sulla lettera.':'';
+  $('lGo').hidden=true;$('lAdd').hidden=!found.length;
+ }catch(e){const st=e?.status;
+  $('lStatus').textContent=st===401?'Chiave API non valida. Controllala nella Console di Anthropic.':st===429?'Troppe richieste o credito esaurito. Riprova tra poco o controlla il credito.':st>=500?'Il servizio è momentaneamente non disponibile. Riprova tra poco.':e instanceof SyntaxError?'Risposta non leggibile. Riprova.':!navigator.onLine?'Sei offline: per leggere una lettera serve la connessione.':(e?.message||'Qualcosa è andato storto. Riprova.');
+  if(st===401){try{store?.removeItem(KKEY)}catch(_){}$('keyBox').hidden=false;$('lForget').hidden=true}
+ }finally{$('lGo').disabled=false}};
+$('lAdd').onclick=()=>{const s=snap();let n=0;
+ found.forEach((x,i)=>{const cb=document.querySelector(`[data-i="${i}"]`),d=document.querySelector(`[data-d="${i}"]`).value,p=parseFloat(document.querySelector(`[data-p="${i}"]`).value)||0;
+  if(cb?.checked&&d){S.items.push({id:uid(),n:x.n,c:x.c,d,r:0,p,rem:7,note:x.note});n++}});
+ if(!n)return $('lStatus').textContent='Seleziona almeno una scadenza con una data.';
+ $('dlgL').close();render();toast(`Aggiunte ${n} scadenze dalla lettera`,restore(s))};
 
 if(!store)$('storeNote').hidden=false;
 render();
