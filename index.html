@@ -94,11 +94,6 @@ footer{font-size:14px;color:var(--mut)}
 .welcome{padding:28px 20px;text-align:center;border:2px dashed var(--line);border-radius:16px}
 .welcome h3{font-size:24px;margin:0 0 6px}
 .welcome .row{justify-content:center;margin-top:16px}
-.found{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;margin-bottom:10px;background:var(--card)}
-.found>label:first-child{display:flex;gap:10px;align-items:center;font-weight:600}
-.found>label:first-child input{width:22px;min-height:22px;flex:none}
-.sum{background:var(--card);border-left:4px solid var(--sun);padding:10px 14px;border-radius:8px;margin-bottom:12px;white-space:pre-line}
-a{color:var(--blue)}
 @media(max-width:600px){.stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.stats .stat:last-child{grid-column:1/-1}.item{grid-template-columns:68px minmax(0,1fr)}.cd b{font-size:24px}.acts{grid-column:1/-1;justify-content:flex-start}.sim{grid-template-columns:minmax(0,1fr)}.f2{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
@@ -113,7 +108,6 @@ a{color:var(--blue)}
   <div class="tools">
     <button class="pri" id="add">+ Nuova scadenza</button>
     <button id="addCar">Aggiungi auto</button>
-    <button id="addLetter">Leggi una lettera</button>
     <input id="q" type="search" placeholder="Cerca…" aria-label="Cerca scadenze">
   </div>
   <section class="today" id="today" hidden aria-labelledby="todayT">
@@ -188,23 +182,6 @@ a{color:var(--blue)}
   <div class="row" style="justify-content:flex-end"><button type="button" class="ghost" id="aCancel">Annulla</button><button class="pri" id="aOk">Aggiungi scadenze</button></div>
 </form></dialog>
 
-<dialog id="dlgL"><form id="frmL" method="dialog">
-  <h3>Leggi una lettera</h3>
-  <p class="note">Fotografa o carica una lettera di Comune, Agenzia delle Entrate, INPS, ASL, banca o gestore. L'AI la spiega in parole semplici e trova le scadenze da aggiungere.</p>
-  <div id="keyBox" hidden>
-    <label class="fl">Chiave API di Anthropic<input id="lKey" type="password" autocomplete="off" placeholder="sk-ant-…"></label>
-    <p class="note">Serve una chiave tua, la crei su <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Ogni lettera costa pochi centesimi, che paghi direttamente ad Anthropic. Ti conviene impostare un limite di spesa nella Console. La chiave resta solo su questo dispositivo: chi usa il tuo telefono può usarla.</p>
-  </div>
-  <label class="fl">Foto o PDF (fino a 5 pagine)<input id="lFile" type="file" accept="image/*,application/pdf" multiple></label>
-  <p class="note"><b>Privacy:</b> per leggerla, la lettera viene inviata ad Anthropic. Se contiene dati molto delicati (es. referti medici), valuta tu se mandarla.</p>
-  <p class="note" id="lStatus" aria-live="polite"></p>
-  <div id="lRes"></div>
-  <div class="row" style="justify-content:space-between">
-    <button type="button" class="ghost" id="lForget" hidden>Rimuovi chiave</button>
-    <span class="row" style="margin-left:auto"><button type="button" class="ghost" id="lCancel">Chiudi</button><button type="button" class="pri" id="lGo">Analizza</button><button type="button" class="pri" id="lAdd" hidden>Aggiungi selezionate</button></span>
-  </div>
-</form></dialog>
-
 <div id="toast" role="status" aria-live="polite"><span id="toastT"></span><button id="toastU" hidden>Annulla</button></div>
 
 <script>
@@ -247,7 +224,7 @@ function row(x){const k=days(x.d),cls=k<0?'late':k<=x.rem?'soon':'';
 
 function list(){const q=$('q').value.trim().toLowerCase();
  const it=S.items.filter(x=>(filter==='all'||x.c===filter)&&(!q||(x.n+' '+x.note).toLowerCase().includes(q))).sort((a,b)=>a.d.localeCompare(b.d));
- if(!it.length){$('sampleNote').hidden=true;$('list').innerHTML=S.items.length?'<div class="empty">Nessuna scadenza con questo filtro.</div>':`<div class="welcome"><h3>Benvenuto in Occhio</h3><p>Aggiungi la prima scadenza: bastano un nome e una data. Oppure parti dall'auto o da una lettera.</p><div class="row"><button class="pri" data-a="new">+ Nuova scadenza</button><button data-a="car">Aggiungi auto</button><button data-a="letter">Leggi una lettera</button></div></div>`;return}
+ if(!it.length){$('sampleNote').hidden=true;$('list').innerHTML=S.items.length?'<div class="empty">Nessuna scadenza con questo filtro.</div>':`<div class="welcome"><h3>Benvenuto in Occhio</h3><p>Aggiungi la prima scadenza: bastano un nome e una data. Oppure parti dall'auto.</p><div class="row"><button class="pri" data-a="new">+ Nuova scadenza</button><button data-a="car">Aggiungi auto</button></div></div>`;return}
  const G=[['late','Scadute',x=>days(x.d)<0],['w','Entro 7 giorni',x=>days(x.d)<=7],['m','Entro 30 giorni',x=>days(x.d)<=30],['l','Più avanti',()=>true]];
  const used=new Set();$('list').innerHTML=G.map(([k,t,f])=>{const g=it.filter(x=>!used.has(x.id)&&f(x));g.forEach(x=>used.add(x.id));return g.length?`<div class="grp ${k==='late'?'late':''}">${t} · ${g.length}</div>${g.map(row).join('')}`:''}).join('');
  $('sampleNote').hidden=!S.items.some(x=>x.ex)}
@@ -286,7 +263,7 @@ $('add').onclick=()=>openForm();
 $('q').oninput=list;
 $('chips').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(b){filter=b.dataset.f;chips();list()}});
 $('list').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;if(a==='new')return openForm();
- if(a==='car')return openCar();if(a==='letter')return openLetter();
+ if(a==='car')return openCar();
  const x=S.items.find(x=>x.id===b.dataset.id);if(!x)return;const s=snap();
  if(a==='edit')return openForm(x);
  if(a==='del'){S.items=S.items.filter(y=>y!==x);render();return toast(`"${x.n}" eliminata`,restore(s))}
@@ -346,67 +323,7 @@ $('frmA').addEventListener('submit',e=>{e.preventDefault();const p=carPlan();if(
  p.forEach(x=>S.items.push({...x,id:uid()}));$('dlgA').close();render();toast(`Aggiunte ${p.length} scadenze per l'auto`,restore(s))});
 $('addCar').onclick=openCar;
 
-// Lettere con Claude
-const KKEY='occhio.key',SDK='https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.8.0/+esm';
-const getKey=()=>{try{return store?.getItem(KKEY)||''}catch(e){return''}};
-let found=[];
-function openLetter(){const k=getKey();$('keyBox').hidden=!!k;$('lForget').hidden=!k;$('lKey').value='';$('lFile').value='';$('lStatus').textContent='';$('lRes').innerHTML='';$('lGo').hidden=false;$('lAdd').hidden=true;found=[];$('dlgL').showModal()}
-$('addLetter').onclick=openLetter;
-$('lCancel').onclick=()=>$('dlgL').close();
-$('frmL').addEventListener('submit',e=>{e.preventDefault();if(!$('lGo').hidden)$('lGo').click()});
-$('lForget').onclick=()=>{try{store?.removeItem(KKEY)}catch(e){}$('keyBox').hidden=false;$('lForget').hidden=true;toast('Chiave rimossa da questo dispositivo')};
-const b64=buf=>{let s='';const u=new Uint8Array(buf);for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)};
-async function toBlock(f){
- if(f.type==='application/pdf'){if(f.size>20e6)throw new Error('Il PDF è troppo grande (massimo 20 MB).');return{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64(await f.arrayBuffer())}}}
- if(!f.type.startsWith('image/'))throw new Error(`"${f.name}" non è né una foto né un PDF.`);
- const bmp=await createImageBitmap(f),sc=Math.min(1,1568/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');
- c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
- return{type:'image',source:{type:'base64',media_type:'image/jpeg',data:c.toDataURL('image/jpeg',.85).split(',')[1]}}}
-const SCHEMA={type:'object',additionalProperties:false,required:['mittente','sintesi','scadenze','avvertenze'],properties:{
- mittente:{type:'string',description:'Chi ha inviato la lettera'},
- sintesi:{type:'string',description:'Cosa dice e cosa chiede la lettera, in 2-4 frasi semplici in italiano, dando del tu'},
- scadenze:{type:'array',items:{type:'object',additionalProperties:false,required:['titolo','data','importo','categoria','cosa_fare'],properties:{
-  titolo:{type:'string',description:'Nome breve della scadenza, max 60 caratteri'},
-  data:{type:'string',description:'Data entro cui agire, formato AAAA-MM-GG; stringa vuota se la lettera non indica una data precisa'},
-  importo:{type:'number',description:'Importo da pagare in euro; 0 se non c\'è nulla da pagare'},
-  categoria:{type:'string',enum:['auto','doc','sub','casa','altro']},
-  cosa_fare:{type:'string',description:'Cosa deve fare concretamente il destinatario, in una frase'}}}},
- avvertenze:{type:'string',description:'Cose a cui fare attenzione (sanzioni, possibilità di ricorso, rateizzazione); stringa vuota se non ce ne sono'}}};
-$('lGo').onclick=async()=>{
- let key=getKey();if(!key){key=$('lKey').value.trim();if(!/^sk-ant-/.test(key))return $('lStatus').textContent='Inserisci una chiave API valida (inizia con sk-ant-).'}
- const files=[...$('lFile').files].slice(0,5);if(!files.length)return $('lStatus').textContent='Scegli almeno una foto o un PDF.';
- $('lGo').disabled=true;$('lStatus').textContent='Preparo i file…';
- try{
-  const blocks=[];for(const f of files)blocks.push(await toBlock(f));
-  $('lStatus').textContent='Sto leggendo la lettera, ci vuole qualche secondo…';
-  const {default:Anthropic}=await import(SDK);
-  const client=new Anthropic({apiKey:key,dangerouslyAllowBrowser:true});
-  const res=await client.beta.messages.create({
-   model:'claude-opus-5-5',max_tokens:16000,
-   betas:['server-side-fallback-2026-07-01'],fallbacks:'default',
-   output_config:{effort:'medium',format:{type:'json_schema',schema:SCHEMA}},
-   system:'Aiuti persone comuni a capire lettere burocratiche italiane (Comune, Agenzia delle Entrate, INPS, ASL, banche, gestori, assicurazioni). Spieghi in modo semplice e preciso, senza inventare: se un dato non è scritto nella lettera, non lo indovini. Oggi è il '+iso(today())+'. Se una scadenza è espressa come "entro N giorni dalla notifica" e la data di notifica non è leggibile, lascia la data vuota e spiegalo in cosa_fare.',
-   messages:[{role:'user',content:[...blocks,{type:'text',text:'Leggi questa lettera. Spiegami cosa vuole e individua tutte le scadenze o i pagamenti con la loro data.'}]}]});
-  if(res.stop_reason==='refusal')throw new Error('Il modello non ha voluto analizzare questo documento.');
-  if(res.stop_reason==='max_tokens')throw new Error('La risposta è stata troncata. Prova con meno pagine.');
-  const txt=res.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-  const o=JSON.parse(txt);
-  if(!getKey()){try{store?.setItem(KKEY,key)}catch(e){}$('keyBox').hidden=true;$('lForget').hidden=false}
-  found=(o.scadenze||[]).map(x=>({n:String(x.titolo||'Scadenza').slice(0,80),d:/^\d{4}-\d{2}-\d{2}$/.test(x.data)&&!isNaN(parse(x.data))?x.data:'',p:Math.max(0,+x.importo||0),c:CATS[x.categoria]?x.categoria:'altro',note:String(x.cosa_fare||'').slice(0,300)}));
-  $('lRes').innerHTML=`<div class="sum"><b>${esc(o.mittente||'Lettera')}</b>\n${esc(o.sintesi||'')}${o.avvertenze?`\n\n<b>Attenzione:</b> ${esc(o.avvertenze)}`:''}</div>`+
-   (found.length?found.map((x,i)=>`<div class="found"><label><input type="checkbox" data-i="${i}" ${x.d?'checked':''}>${esc(x.n)}</label><div class="f2"><label class="fl">Data<input type="date" data-d="${i}" value="${esc(x.d)}"></label><label class="fl">Importo (€)<input type="number" min="0" step="0.01" data-p="${i}" value="${x.p||''}"></label></div><span class="note">${esc(x.note)}</span></div>`).join(''):'<p class="note">Non ho trovato scadenze con una data in questa lettera.</p>');
-  $('lStatus').textContent=found.length?'Controlla le date e aggiungi quelle giuste. L\'AI può sbagliare: verifica sempre sulla lettera.':'';
-  $('lGo').hidden=true;$('lAdd').hidden=!found.length;
- }catch(e){const st=e?.status;
-  $('lStatus').textContent=st===401?'Chiave API non valida. Controllala nella Console di Anthropic.':st===429?'Troppe richieste o credito esaurito. Riprova tra poco o controlla il credito.':st>=500?'Il servizio è momentaneamente non disponibile. Riprova tra poco.':e instanceof SyntaxError?'Risposta non leggibile. Riprova.':!navigator.onLine?'Sei offline: per leggere una lettera serve la connessione.':(e?.message||'Qualcosa è andato storto. Riprova.');
-  if(st===401){try{store?.removeItem(KKEY)}catch(_){}$('keyBox').hidden=false;$('lForget').hidden=true}
- }finally{$('lGo').disabled=false}};
-$('lAdd').onclick=()=>{const s=snap();let n=0;
- found.forEach((x,i)=>{const cb=document.querySelector(`[data-i="${i}"]`),d=document.querySelector(`[data-d="${i}"]`).value,p=parseFloat(document.querySelector(`[data-p="${i}"]`).value)||0;
-  if(cb?.checked&&d){S.items.push({id:uid(),n:x.n,c:x.c,d,r:0,p,rem:7,note:x.note});n++}});
- if(!n)return $('lStatus').textContent='Seleziona almeno una scadenza con una data.';
- $('dlgL').close();render();toast(`Aggiunte ${n} scadenze dalla lettera`,restore(s))};
-
+try{store?.removeItem('occhio.key')}catch(e){}
 if(!store)$('storeNote').hidden=false;
 render();
 setInterval(()=>{if(document.visibilityState==='visible')render()},6e4);
